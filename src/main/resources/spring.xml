@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop" xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:task="http://www.springframework.org/schema/task"
+
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+						http://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/aop
+						http://www.springframework.org/schema/aop/spring-aop.xsd http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task.xsd">
+
+    <!--开启spring的注解-->
+    <context:annotation-config></context:annotation-config>
+    <!--制定spring扫描的包，此处可以有多行-->
+    <context:component-scan base-package="com.westos.web02.annotation"/>
+    <context:component-scan base-package="com.westos.web02.aop"/>
+    <context:component-scan base-package="com.westos.web02.servlet"/>
+   <!--开启aop注解-->
+    <aop:aspectj-autoproxy proxy-target-class="false"/>
+
+<context:property-placeholder location="classpath:jdbc.properties" file-encoding="utf-8"/>
+    <!--springmvc的配置-->
+    <!--将bean映射为url-->
+    <bean id="/hello.do" class="com.westos.web02.controller.BeanController">
+        <property name="student" ref="stu"/>
+    </bean>
+
+    <bean id="myaware" class="com.westos.web02.util.MyAware"/>
+
+    <bean id="mymap" class="org.springframework.beans.factory.config.MapFactoryBean">
+        <property name="sourceMap">
+            <map>
+                <entry key="a" value="1"/>
+                <entry key="b" value="2"/>
+            </map>
+        </property>
+        <property name="targetMapClass" value="java.util.HashMap"/>
+    </bean>
+
+    <bean id="stu" scope="singleton" class="com.westos.web02.bean.Student">
+        <property name="xuhao" value="NO.001"></property>
+        <property name="xingming" value="张三"></property>
+        <property name="aihao">
+            <list>
+                <value>看电影</value>
+                <value>购物</value>
+            </list>
+        </property>
+        <property name="chengji">
+            <map>
+                <entry key="english" value="90"></entry>
+                <entry key="math" value="80"></entry>
+            </map>
+            <!--<set>-->
+                <!--<value>1</value>-->
+                <!--<value>2</value>-->
+            <!--</set>-->
+            <!--<props>-->
+                <!--<prop key="1">111</prop>-->
+            <!--</props>-->
+        </property>
+    </bean>
+    <bean id="student" scope="singleton" class="com.westos.web02.bean.Student">
+        <property name="xuhao" value="No003"/>
+    </bean>
+    <bean id="teacher"  class="com.westos.web02.bean.Teacher" init-method="init">
+        <property name="student" ref="stu">
+
+        </property>
+        <property name="name" value="王老师"/>
+    </bean>
+
+    <bean id="teacher2" scope="singleton" class="com.westos.web02.bean.Teacher" autowire="byName">
+        <property name="name" value="李老师"/>
+
+    </bean>
+    <bean id="teacher3" scope="prototype"  class="com.westos.web02.bean.Teacher" autowire="byName">
+        <property name="name" value="张老师"/>
+
+    </bean>
+    <bean id="stu4" class="com.westos.web02.factory.StudentFactory" factory-method="create">
+        <property name="xuhao" value="33"/>
+    </bean>
+    <bean id="stu5" class="com.westos.web02.factory.StudentFactoryBean"></bean>
+    <!--自己实现的mybatis与spring的整合-->
+    <bean id="sqlSessionFactory" class="com.westos.web02.factory.MybatisFactoryBean">
+        <property name="resource" value="mybatis.xml"/>
+    </bean>
+    <bean id="haohandao" class="com.westos.web02.factory.MapperFactoryBean">
+        <property name="sqlsessionFactory" ref="sqlSessionFactory"/>
+        <property name="targetMapClass" value="com.westos.web02.dao.HaohanDao"/>
+
+    </bean>
+<!--mybatis与spring的整合配置-->
+    <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="${url}"/>
+        <property name="username" value="root"/>
+        <property name="password" value="123456"/>
+    </bean>
+    <bean id="sqlSessionFactoryb" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <!--数据源的配置-->
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryb"/>
+        <!--dao所在的包-->
+        <property name="basePackage" value="com.westos.web02.dao"/>
+    </bean>
+
+    <bean id="myPointCut" class="com.westos.web02.aop.MyPointCut">
+        <property name="methodlist">
+            <list>
+                <value>com.westos.web02.aop.HelloInterface.sayHi</value>
+            </list>
+        </property>
+    </bean>
+    <!--spring aop的配置-->
+
+    <bean id="helloInterface" class="com.westos.web02.aop.HelloInterfaceImpl"/>
+    <!--配置advice-->
+    <bean id="helloAdvice" class="com.westos.web02.springaop.HelloAdvice"></bean>
+    <bean id="mySpringAdvice" class="com.westos.web02.springaop.MySpringAdvice"/>
+
+    <bean id="mySpringAdviceb" class="com.westos.web02.springaop.MySpringAdviceb"/>
+    <!--aspect的配置-->
+    <aop:config>
+        <!--pointcut的配置-->
+              <aop:pointcut id="mycut" expression="execution(* com.westos.web02.aop.HelloInterface.say*(..))"/>
+        <!--advice的配置-->
+        <aop:advisor advice-ref="helloAdvice" pointcut-ref="mycut"/>
+
+
+        <aop:aspect id="asp" ref="mySpringAdvice"  >
+            <aop:before method="doBefore"  pointcut-ref="mycut"/>
+            <aop:after-returning method="doAfter"  pointcut-ref="mycut"/>
+            <aop:around method="doAround"  pointcut-ref="mycut"/>
+        </aop:aspect>
+    </aop:config>
+</beans>
